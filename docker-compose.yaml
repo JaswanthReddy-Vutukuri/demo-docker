@@ -1,0 +1,79 @@
+version: '3.8'
+
+services:
+  # Frontend Angular app served via Nginx
+  frontend:
+    build: ../demo-frontend              # Build from frontend folder
+    ports:
+      - "80:80"                   # Map container port 80 to host port 80
+    networks:
+      - app-network               # Connect to shared network
+    depends_on:
+      - todo-service              # Wait for backend services before starting
+      - favorites-service
+
+  # Todo CRUD microservice
+  todo-service:
+    build: ../demo-backend/todo-service
+    networks:
+      - app-network
+    volumes:
+      - todo-data:/app/data       # Persist SQLite database files
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - DB_PATH=/app/data/todos.db
+      - LOG_LEVEL=${LOG_LEVEL:-info}
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    deploy:
+      resources:
+        limits:
+          cpus: '0.50'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    restart: unless-stopped
+
+  # Favorites microservice
+  favorites-service:
+    build: ../demo-backend/favorites-service
+    networks:
+      - app-network
+    volumes:
+      - favorites-data:/app/data  # Persist SQLite database files
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - DB_PATH=/app/data/todos.db
+      - LOG_LEVEL=${LOG_LEVEL:-info}
+
+# Shared network for all services to communicate by container name
+networks:
+  app-network:
+
+# Named volumes to persist data outside containers
+volumes:
+  todo-data:
+    driver: local
+    driver_opts:
+      type: 'none'
+      o: 'bind'
+      device: '/path/on/host/todo-data'
+  favorites-data:
+
+secrets:
+  db_password:
+    file: ./secrets/db_password.txt
+  jwt_secret:
+    file: ./secrets/jwt_secret.txt
