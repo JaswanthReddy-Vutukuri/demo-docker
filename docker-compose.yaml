@@ -5,7 +5,7 @@ services:
   frontend:
     build: ../demo-frontend              # Build from frontend folder
     ports:
-      - "80:80"                   # Map container port 80 to host port 80
+      - "38798:38798"                   # Map container port 38798 to host port 38798
     networks:
       - app-network               # Connect to shared network
     depends_on:
@@ -28,12 +28,12 @@ services:
       - PORT=38799
       - DB_PATH=/app/data/todos.db
       - LOG_LEVEL=${LOG_LEVEL:-info}
-    # healthcheck:
-    #   test: ["CMD", "curl", "-f", "http://localhost:38799/health"]
-    #   interval: 30s
-    #   timeout: 10s
-    #   retries: 3
-    #   start_period: 40s
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:38799/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
     # deploy:
     #   resources:
     #     limits:
@@ -42,12 +42,12 @@ services:
     #     reservations:
     #       cpus: '0.25'
     #       memory: 256M
-    # logging:
-    #   driver: "json-file"
-    #   options:
-    #     max-size: "10m"
-    #     max-file: "3"
-    # restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    restart: unless-stopped
 
   # Favorites microservice
   favorites-service:
