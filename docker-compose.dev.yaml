@@ -1,0 +1,49 @@
+version: '3.8'
+
+services:
+  frontend:
+    build:
+      context: ../demo-frontend
+      target: development
+    ports:
+      - "81:81"
+    depends_on:
+      - todo-service
+      - favorites-service
+    networks:
+      - app-network
+
+  todo-service:
+    build:
+      context: ../demo-backend/todo-service
+      dockerfile: Dockerfile
+    ports:
+      - "82:82"
+    environment:
+      - PORT=82
+      - NODE_ENV=production
+    networks:
+      - app-network
+    volumes:
+      - todos-data:/app/data
+
+  favorites-service:
+    build:
+      context: ../demo-backend/favorites-service
+      dockerfile: Dockerfile
+    ports:
+      - "83:83"
+    environment:
+      - PORT=83
+      - NODE_ENV=production
+    networks:
+      - app-network
+    volumes:
+      - favorites-data:/app/data
+
+networks:
+  app-network:
+
+volumes:
+  todos-data:
+  favorites-data:
